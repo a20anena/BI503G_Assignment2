@@ -22,5 +22,3 @@ workflow {
     fastaChannel = Channel.fromPath(params.inputFile)
     filterFasta(fastaChannel, params.cutoff)
 }
-
-
