@@ -1,9 +1,8 @@
-#!/usr/bin/env nextflow
-
+nextflow.enable.dsl=2
 params.inputFile = null
 params.cutoff = 0.5
 
-process filterFasta {
+process gc_filter {
 
     input:
     path fastaFile
@@ -14,11 +13,47 @@ process filterFasta {
 
     script:
     """
-    echo "hello" > output.txt
+    python3 - << 'EOF'
+fasta = "${fastaFile}"
+cutoff = float("${cutoff}")
+
+def gc(seq):
+    seq = seq.upper()
+    if len(seq) == 0:
+        return 0
+    return (seq.count('G') + seq.count('C')) / len(seq)
+
+out = open("output.txt", "w")
+name = None
+seq = ""
+
+for line in open(fasta):
+    line = line.strip()
+    if line.startswith(">"):
+        if name and gc(seq) > cutoff:
+            out.write(name + "\\n")
+            out.write(seq + "\\n")
+        name = line
+        seq = ""
+    else:
+        seq += line
+
+if name and gc(seq) > cutoff:
+    out.write(name + "\\n")
+    out.write(seq + "\\n")
+
+out.close()
+EOF
     """
 }
 
 workflow {
-    fastaChannel = Channel.fromPath(params.inputFile)
-    filterFasta(fastaChannel, params.cutoff)
+    reads = Channel.fromPath(params.inputFile)
+    gc_filter(reads, params.cutoff)
 }
+
+# I run by:
+
+~/nextflow run main.nf --inputFile bacterial_dna.fasta --cutoff 0.5
+
+
