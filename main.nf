@@ -52,8 +52,7 @@ workflow {
     gc_filter(reads, params.cutoff)
 }
 
-# I run by:
 
-~/nextflow run main.nf --inputFile bacterial_dna.fasta --cutoff 0.5
+
 
 
